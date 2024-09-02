@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/WofWca/snowflake-generalized/common"
+	"github.com/xtaci/smux"
 	safelog "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil/safelog"
 	snowflakeClient "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2/client/lib"
 )
@@ -85,6 +86,15 @@ func main() {
 		frontDomains = strings.Split(strings.TrimSpace(*frontDomainsCommas), ",")
 	}
 
+	// Setting scrubber _after_ initial checks
+	// so that addresses are printed properly.
+	logOutput := os.Stdout
+	if *unsafeLogging {
+		log.SetOutput(logOutput)
+	} else {
+		log.SetOutput(&safelog.LogScrubber{Output: logOutput})
+	}
+
 	config := snowflakeClient.ClientConfig{
 		BrokerURL:         *brokerURL,
 		BridgeFingerprint: *serverId,
@@ -106,22 +116,42 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to start snowflake transport: ", err)
 	}
+	snowflakeClientConn, err := snowflakeClientTransport.Dial()
+	if err != nil {
+		// TODO should we retry?
+		log.Fatal("Snowflake dial failed", err)
+	}
 
-	// Setting scrubber _after_ initial checks
-	// so that addresses are printed properly.
-	logOutput := os.Stdout
-	if *unsafeLogging {
-		log.SetOutput(logOutput)
-	} else {
-		log.SetOutput(&safelog.LogScrubber{Output: logOutput})
+	// Why use a multiplexer instead of `snowflakeClientTransport.Dial()`-ing
+	// per each TCP connection?
+	// Firstly, connecting to a new proxy takes some seconds
+	// (sometimes minutes!).
+	// This is not great if we expect to receive connections frequently.
+	// E.g. for the case of SOCKS proxy. A browser SOCKS client
+	// makes a new TCP connection per nearly every HTTP request,
+	// so each request would be delayed by the amount of time
+	// it takes to get a new Snowflake proxy.
+	//
+	// Secondly, apparently the previous `Dial()` gets discarded
+	// and connection lost.
+	//
+	// https://github.com/xtaci/smux?tab=readme-ov-file#usage
+	//
+	// TODO perf: Snowflake already uses smux internally.
+	// Can we maybe modify the library so that it exposes the session
+	// so we can use it?
+	// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/bf116939935b0a2ae2adf4f5976c349aae96e48b/client/lib/snowflake.go#L211-212
+	snowflakeClientMuxSession, err := smux.Client(snowflakeClientConn, nil)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Also UDP in the future
 	log.Printf("Forwarding TCP connections to \"%v\" to server \"%v\"", *listenAddr, *serverId)
-	acceptLoop(listener, snowflakeClientTransport)
+	acceptLoop(listener, snowflakeClientMuxSession)
 }
 
-func acceptLoop(ln net.Listener, snowflakeClientTransport *snowflakeClient.Transport) {
+func acceptLoop(ln net.Listener, snowflakeClientMuxSession *smux.Session) {
 	for {
 		netConn, err := ln.Accept()
 		if err != nil {
@@ -135,22 +165,16 @@ func acceptLoop(ln net.Listener, snowflakeClientTransport *snowflakeClient.Trans
 		log.Print("Got new connection! Forwarding")
 
 		go func() {
-			// TODO perf: making a new Snowflake proxy connection
-			// per each TCP connection is not great.
-			// E.g. for the case of SOCKS proxy. E.g. a browser SOCKS client
-			// makes a new TCP connection per nearly every HTTP request,
-			// so each request would be delayed by the amount of time
-			// it takes to get a new Snowflake proxy.
-			snowflakeClientConn, err := snowflakeClientTransport.Dial()
+			snowflakeStream, err := snowflakeClientMuxSession.OpenStream()
 			if err != nil {
-				log.Print("Snowflake dial failed", err)
+				log.Print("smux.OpenStream() failed: ", err)
 				netConn.Close()
 				return
 			}
 
 			// TODO should we utilize `shutdownChan`?
 			shutdownChan := make(chan struct{})
-			common.CopyLoop(snowflakeClientConn, netConn, shutdownChan)
+			common.CopyLoop(snowflakeStream, netConn, shutdownChan)
 		}()
 	}
 }

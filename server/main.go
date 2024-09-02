@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"net"
 	"os"
 
 	"github.com/WofWca/snowflake-generalized/common"
+	"github.com/xtaci/smux"
 	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil/safelog"
 	snowflakeServer "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2/server/lib"
 )
@@ -96,18 +98,45 @@ func main() {
 			break
 		}
 		log.Printf("Got Snowflake client connection! Forwarding to \"%v\"", targetAddr)
+		go serveSnowflakeConnection(&clientConn, &targetAddr)
+	}
+}
+
+// Closes the connection when it finishes serving it.
+func serveSnowflakeConnection(snowflakeConn *net.Conn, targetAddr *string) {
+	defer (*snowflakeConn).Close()
+
+	muxSession, err := smux.Server(*snowflakeConn, nil)
+	if err != nil {
+		log.Print("Mux session open error", err)
+		return
+	}
+	defer muxSession.Close()
+
+	for {
+		stream, err := muxSession.AcceptStream()
+		if err != nil {
+			// Otherwise it's a regular connection close
+			// TODO or is it? There is `ErrTimeout`?
+			if err != io.ErrClosedPipe {
+				log.Print("AcceptStream error", err)
+			}
+			return
+		}
+		log.Print("New stream!", stream.ID())
 
 		go func() {
-			targetConn, err := net.Dial("tcp", targetAddr)
+			targetConn, err := net.Dial("tcp", *targetAddr)
 			if err != nil {
 				log.Print("Failed to dial target address", err)
-				clientConn.Close()
+				// Hmm should we also snowflakeConn.Close()
+				stream.Close()
 				return
 			}
 
 			// TODO should we utilize `shutdownChan`?
 			shutdownChan := make(chan struct{})
-			common.CopyLoop(clientConn, targetConn, shutdownChan)
+			common.CopyLoop(stream, targetConn, shutdownChan)
 		}()
 	}
 }
