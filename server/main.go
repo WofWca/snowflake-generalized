@@ -15,7 +15,7 @@ import (
 
 func main() {
 	var listenAddr string
-	var targetAddr string
+	var destinationAddr string
 	// var acmeEmail string
 	// var acmeHostnamesCommas string
 	// var disableTLS bool
@@ -30,11 +30,11 @@ func main() {
 		&listenAddr,
 		"listen-address",
 		"localhost:7901",
-		"Listen for proxy connections on this `address` and forward them to \"target-addr\".\nSet to \":7901\" to listen on port 7901 on all interfaces.",
+		"Listen for proxy connections on this `address` and forward them to \"destination-addr\".\nSet to \":7901\" to listen on port 7901 on all interfaces.",
 	)
 	flag.StringVar(
-		&targetAddr,
-		"target-address",
+		&destinationAddr,
+		"destination-address",
 		"", // "localhost:1080", we probably should not have a default address for security reasons
 		"Forward client connections to this `address`.\nThis can also be a remote address.",
 	)
@@ -54,9 +54,9 @@ func main() {
 	// 	Email:      "you@yourdomain.com",
 	// }
 
-	if targetAddr == "" {
+	if destinationAddr == "" {
 		flag.Usage()
-		log.Fatalf("\"target-address\" must be specified")
+		log.Fatalf("\"destination-address\" must be specified")
 	}
 	listenAddrStruct, err := net.ResolveTCPAddr("tcp", listenAddr)
 	if err != nil {
@@ -73,7 +73,7 @@ func main() {
 	log.Printf(
 		"Listening for proxy connections on \"%v\" and forwarding them to \"%v\"",
 		listenAddrStruct,
-		targetAddr,
+		destinationAddr,
 	)
 
 	// Setting scrubber _after_ initial checks
@@ -97,13 +97,13 @@ func main() {
 			// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/6d2011ded71dc53662fa0f256fbf9c3036c474a4/server/server.go#L99-111
 			break
 		}
-		log.Printf("Got Snowflake client connection! Forwarding to \"%v\"", targetAddr)
-		go serveSnowflakeConnection(&clientConn, &targetAddr)
+		log.Printf("Got Snowflake client connection! Forwarding to \"%v\"", destinationAddr)
+		go serveSnowflakeConnection(&clientConn, &destinationAddr)
 	}
 }
 
 // Closes the connection when it finishes serving it.
-func serveSnowflakeConnection(snowflakeConn *net.Conn, targetAddr *string) {
+func serveSnowflakeConnection(snowflakeConn *net.Conn, destinationAddr *string) {
 	defer (*snowflakeConn).Close()
 
 	muxSession, err := smux.Server(*snowflakeConn, nil)
@@ -126,9 +126,9 @@ func serveSnowflakeConnection(snowflakeConn *net.Conn, targetAddr *string) {
 		log.Print("New stream!", stream.ID())
 
 		go func() {
-			targetConn, err := net.Dial("tcp", *targetAddr)
+			destinationConn, err := net.Dial("tcp", *destinationAddr)
 			if err != nil {
-				log.Print("Failed to dial target address", err)
+				log.Print("Failed to dial destination address", err)
 				// Hmm should we also snowflakeConn.Close()
 				stream.Close()
 				return
@@ -136,7 +136,7 @@ func serveSnowflakeConnection(snowflakeConn *net.Conn, targetAddr *string) {
 
 			// TODO should we utilize `shutdownChan`?
 			shutdownChan := make(chan struct{})
-			common.CopyLoop(stream, targetConn, shutdownChan)
+			common.CopyLoop(stream, destinationConn, shutdownChan)
 		}()
 	}
 }

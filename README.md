@@ -223,7 +223,7 @@ the connection will be performed to `example.com:80` from
 
     ```bash
     go run . \
-        -target-address='example.com:80' \
+        -destination-address='example.com:80' \
         -listen-address='localhost:7901'
     ```
 
