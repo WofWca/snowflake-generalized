@@ -106,7 +106,11 @@ func main() {
 func serveSnowflakeConnection(snowflakeConn *net.Conn, destinationAddr *string) {
 	defer (*snowflakeConn).Close()
 
-	muxSession, err := smux.Server(*snowflakeConn, nil)
+	smuxConfig := smux.DefaultConfig()
+	// Let's not close the connection on our own, and let Snowflake handle that.
+	smuxConfig.KeepAliveDisabled = true
+
+	muxSession, err := smux.Server(*snowflakeConn, smuxConfig)
 	if err != nil {
 		log.Print("Mux session open error", err)
 		return

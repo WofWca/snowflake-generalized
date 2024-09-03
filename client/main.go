@@ -141,7 +141,16 @@ func main() {
 	// Can we maybe modify the library so that it exposes the session
 	// so we can use it?
 	// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/bf116939935b0a2ae2adf4f5976c349aae96e48b/client/lib/snowflake.go#L211-212
-	snowflakeClientMuxSession, err := smux.Client(snowflakeClientConn, nil)
+
+	smuxConfig := smux.DefaultConfig()
+	// Connecting with Snowflake might take some minutes sometimes.
+	// Let's not close the connection on our own, and let Snowflake handle that.
+	//
+	// TODO we probably don't want to terminate the client at all and
+	// just keep retrying.
+	smuxConfig.KeepAliveDisabled = true
+
+	snowflakeClientMuxSession, err := smux.Client(snowflakeClientConn, smuxConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
