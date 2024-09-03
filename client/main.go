@@ -174,6 +174,11 @@ func acceptLoop(ln net.Listener, snowflakeClientMuxSession *smux.Session) {
 		log.Print("Got new connection! Forwarding")
 
 		go func() {
+			// TODO handle errors carefully.
+			// E.g. there is `ErrGoAway` which occurs when stream IDs
+			// get exhausted, and when that happens,
+			// we can never open a new stream, which means that
+			// we probably need to recreate a smux session.
 			snowflakeStream, err := snowflakeClientMuxSession.OpenStream()
 			if err != nil {
 				log.Print("smux.OpenStream() failed: ", err)
