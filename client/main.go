@@ -174,6 +174,7 @@ func acceptLoop(ln net.Listener, snowflakeClientMuxSession *smux.Session) {
 		log.Print("Got new connection! Forwarding")
 
 		go func() {
+			defer netConn.Close()
 			// TODO handle errors carefully.
 			// E.g. there is `ErrGoAway` which occurs when stream IDs
 			// get exhausted, and when that happens,
@@ -182,9 +183,9 @@ func acceptLoop(ln net.Listener, snowflakeClientMuxSession *smux.Session) {
 			snowflakeStream, err := snowflakeClientMuxSession.OpenStream()
 			if err != nil {
 				log.Print("smux.OpenStream() failed: ", err)
-				netConn.Close()
 				return
 			}
+			defer snowflakeStream.Close()
 
 			// TODO should we utilize `shutdownChan`?
 			shutdownChan := make(chan struct{})

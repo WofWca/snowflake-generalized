@@ -8,12 +8,10 @@ import (
 
 // Copy-pasted from
 // https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/f4db64612c500be635dc7eb231505e88552e6a07/proxy/lib/snowflake.go#L307-335
-// Pipes data between the two connections, and closes both
-// when either closes or ends.
+// Pipes data between the two connections.
+// Returns when piping at either end fails.
 func CopyLoop(c1 io.ReadWriteCloser, c2 io.ReadWriteCloser, shutdown chan struct{}) {
 	var once sync.Once
-	defer c2.Close()
-	defer c1.Close()
 	done := make(chan struct{})
 	copyer := func(dst io.ReadWriteCloser, src io.ReadWriteCloser) {
 		// Experimentally each usage of buffer has been observed to be lower than

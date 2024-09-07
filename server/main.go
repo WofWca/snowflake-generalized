@@ -130,13 +130,14 @@ func serveSnowflakeConnection(snowflakeConn *net.Conn, destinationAddr *string) 
 		log.Print("New stream!", stream.ID())
 
 		go func() {
+			defer stream.Close()
 			destinationConn, err := net.Dial("tcp", *destinationAddr)
 			if err != nil {
 				log.Print("Failed to dial destination address", err)
 				// Hmm should we also snowflakeConn.Close()
-				stream.Close()
 				return
 			}
+			defer destinationConn.Close()
 
 			// TODO should we utilize `shutdownChan`?
 			shutdownChan := make(chan struct{})
