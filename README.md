@@ -273,4 +273,4 @@ Now feel free to replace `example.com:80` with a real service of your choosing.
 ["Snowflake as a generic TCP (UDP?) forwarder (like `ssh -L`)"](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40168)
 issue. -->
 
-Thanks to The Tor Project for making [the Snowflake library](gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/) easy to use!
+Thanks to The Tor Project for making [the Snowflake library](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/) easy to use!
