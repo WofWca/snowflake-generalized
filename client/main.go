@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/WofWca/snowflake-generalized/common"
+	pionUDP "github.com/pion/transport/v3/udp"
 	"github.com/xtaci/smux"
 	safelog "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil/safelog"
 	snowflakeClient "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2/client/lib"
@@ -76,7 +77,11 @@ func main() {
 		log.Fatal("\"broker-url\" must be specified because the default broker only supports Tor relays.\nSee https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40166")
 	}
 
-	listener, err := net.Listen("tcp", *listenAddr)
+	listenAddrStruct, err := net.ResolveUDPAddr("udp", *listenAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	listener, err := pionUDP.Listen("udp", listenAddrStruct)
 	if err != nil {
 		log.Fatalf("Failed to listen on \"%v\": %v", *listenAddr, err)
 	}
@@ -156,7 +161,7 @@ func main() {
 	}
 
 	// Also UDP in the future
-	log.Printf("Forwarding TCP connections to \"%v\" to server \"%v\"", *listenAddr, *serverId)
+	log.Printf("Forwarding UDP connections to \"%v\" to server \"%v\"", *listenAddr, *serverId)
 	acceptLoop(listener, snowflakeClientMuxSession)
 }
 

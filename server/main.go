@@ -55,7 +55,7 @@ func main() {
 		flag.Usage()
 		log.Fatalf("\"destination-address\" must be specified")
 	}
-	listenAddrStruct, err := net.ResolveTCPAddr("tcp", listenAddr)
+	listenAddrStruct, err := net.ResolveUDPAddr("udp", listenAddr)
 	if err != nil {
 		log.Fatalf("error resolving listen address: %s", err.Error())
 	}
@@ -161,7 +161,7 @@ func serveSnowflakeConnection(snowflakeConn *net.Conn, destinationAddr *string) 
 
 		go func() {
 			defer stream.Close()
-			destinationConn, err := net.Dial("tcp", *destinationAddr)
+			destinationConn, err := net.Dial("udp", *destinationAddr)
 			if err != nil {
 				log.Print("Failed to dial destination address", err)
 				// Hmm should we also snowflakeConn.Close()
