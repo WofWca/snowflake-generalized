@@ -3,7 +3,7 @@ module github.com/WofWca/snowflake-generalized
 go 1.23.0
 
 require (
-	github.com/xtaci/smux v1.5.27
+	github.com/xtaci/smux v1.5.29
 	gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil v0.0.0-20240710081135-6c4d8ed41027
 	gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2 v2.9.3-0.20240827134308-97e21e3a29f8
 	golang.org/x/crypto v0.26.0
@@ -11,7 +11,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.30.4 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.30.5 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.28 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.30 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.12 // indirect
@@ -74,3 +74,5 @@ require (
 	golang.org/x/tools v0.22.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2 => gitlab.torproject.org/WofWca/snowflake/v2 v2.0.0-20240920164032-861cac956e7b
