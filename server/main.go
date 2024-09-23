@@ -5,20 +5,24 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/WofWca/snowflake-generalized/common"
 	"github.com/xtaci/smux"
 	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil/safelog"
 	snowflakeServer "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2/server/lib"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 func main() {
 	var listenAddr string
 	var destinationAddr string
-	// var acmeEmail string
-	// var acmeHostnamesCommas string
-	// var disableTLS bool
+	var acmeEmail string
+	var acmeHostnamesCommas string
+	var acmeCertCacheDir string
+	var disableTLS bool
 	// var logFilename string
 	var unsafeLogging bool
 	// var versionFlag bool
@@ -38,21 +42,14 @@ func main() {
 		"", // "localhost:1080", we probably should not have a default address for security reasons
 		"Forward client connections to this `address`.\nThis can also be a remote address.",
 	)
-	// flag.StringVar(&acmeEmail, "acme-email", "", "optional contact email for Let's Encrypt notifications")
-	// flag.StringVar(&acmeHostnamesCommas, "acme-hostnames", "", "comma-separated hostnames for TLS certificate")
-	// flag.BoolVar(&disableTLS, "disable-tls", false, "don't use HTTPS")
+	flag.StringVar(&acmeEmail, "acme-email", "", "optional contact email for Let's Encrypt notifications")
+	flag.StringVar(&acmeHostnamesCommas, "acme-hostnames", "", "comma-separated hostnames for TLS certificate")
+	flag.StringVar(&acmeCertCacheDir, "acme-cert-cache", "acme-cert-cache", "directory in which certificates should be cached")
+	flag.BoolVar(&disableTLS, "disable-tls", false, "don't use HTTPS")
 	// flag.StringVar(&logFilename, "log", "", "log file to write to")
 	flag.BoolVar(&unsafeLogging, "unsafe-logging", false, "prevent logs from being scrubbed")
 	// flag.BoolVar(&versionFlag, "version", false, "display version info to stderr and quit")
 	flag.Parse()
-
-	// The snowflake server runs a websocket server. To run this securely, you will
-	// need a valid certificate.
-	// certManager := &autocert.Manager{
-	// 	Prompt:     autocert.AcceptTOS,
-	// 	HostPolicy: autocert.HostWhitelist("snowflake.yourdomain.com"),
-	// 	Email:      "you@yourdomain.com",
-	// }
 
 	if destinationAddr == "" {
 		flag.Usage()
@@ -63,7 +60,40 @@ func main() {
 		log.Fatalf("error resolving listen address: %s", err.Error())
 	}
 
-	transport := snowflakeServer.NewSnowflakeServer(nil)
+	// var certManager *autocert.Manager = nil
+	var transport *snowflakeServer.Transport
+	if !disableTLS {
+		if acmeHostnamesCommas == "" {
+			log.Fatal("the --acme-hostnames option is required, unless --disable-tls")
+		}
+
+		acmeHostnames := strings.Split(acmeHostnamesCommas, ",")
+		log.Printf("ACME hostnames: %q", acmeHostnames)
+
+		var cache autocert.Cache
+		if acmeCertCacheDir != "" {
+			log.Printf("caching ACME certificates in directory %q", acmeCertCacheDir)
+			cache = autocert.DirCache(acmeCertCacheDir)
+		} else {
+			log.Printf("disabling ACME certificate cache: %s", err)
+		}
+
+		certManager := autocert.Manager{
+			Cache:      cache,
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(acmeHostnames...),
+			Email:      acmeEmail,
+		}
+		go func() {
+			log.Printf("Starting HTTP-01 listener")
+			log.Fatal(http.ListenAndServe(":80", certManager.HTTPHandler(nil)))
+		}()
+
+		transport = snowflakeServer.NewSnowflakeServer(certManager.GetCertificate)
+	} else {
+		transport = snowflakeServer.NewSnowflakeServer(nil)
+	}
+
 	numKCPInstances := 1
 	ln, err := transport.Listen(listenAddrStruct, numKCPInstances)
 	if err != nil {

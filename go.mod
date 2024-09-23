@@ -6,6 +6,7 @@ require (
 	github.com/xtaci/smux v1.5.27
 	gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil v0.0.0-20240710081135-6c4d8ed41027
 	gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2 v2.9.3-0.20240827134308-97e21e3a29f8
+	golang.org/x/crypto v0.26.0
 )
 
 require (
@@ -65,7 +66,6 @@ require (
 	github.com/txthinking/socks5 v0.0.0-20230325130024-4230056ae301 // indirect
 	github.com/wlynxg/anet v0.0.3 // indirect
 	github.com/xtaci/kcp-go/v5 v5.6.8 // indirect
-	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect

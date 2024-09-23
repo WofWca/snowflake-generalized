@@ -213,20 +213,19 @@ the connection will be performed to `example.com:80` from
 
 1. Run the server.
 
-    ⚠️ As of 2024-09-02 the server doesn't support TLS natively.
-    To add encryption, you ought to use Nginx or something like that.
-
     Replace `example.com:80` with the desired destination.
     In practice you'd want it to be a
     [SOCKS](https://github.com/serjs/socks5-server)
     / VPN / Tor server running on the same machine as the server.
     Also replace `localhost:7901` with `:7901` if you want the server
     to be publicly reachable.
+    ⚠️ Remove `-disable-tls` and add `acme-hostnames=...` to enable encryption.
 
     ```bash
     go run . \
         -destination-address='example.com:80' \
-        -listen-address='localhost:7901'
+        -listen-address='localhost:7901' \
+        -disable-tls
     ```
 
 ### 4. Run the client
