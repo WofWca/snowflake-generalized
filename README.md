@@ -24,8 +24,8 @@ A Snowflake client is embedded into Tor Browser and [Orbot](https://orbot.app/).
 Orbot provides VPN-like functionality by tunneling traffic through Tor,
 optionally accessing Tor through bridges, such as Snowflake.
 
-![Architecture of Snowflake](https://www.bamsoftware.com/papers/snowflake/architecture.jpg)
-(Figure from
+![Architecture of Snowflake-generalized](./docs/snowflake-generalized.svg)
+(An altered figure from
 [the Snowflake paper](https://www.bamsoftware.com/papers/snowflake/)
 (which you should check out (it's not that hard to read)))
 
