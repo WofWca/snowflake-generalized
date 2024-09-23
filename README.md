@@ -4,14 +4,14 @@ Censorship circumvention software like
 [Snowflake](https://snowflake.torproject.org/),
 but faster thanks to not using Tor.
 
-Acts as a TCP (and maybe UDP in the future) tunnel
+Acts as a TCP or UDP tunnel
 between the user ([client](./client/main.go)) and
 the [server](./server/main.go),
 much like `ssh -L`.
 <!-- As proposed in
 ["Snowflake as a generic TCP (UDP?) forwarder (like `ssh -L`)"](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40168) -->
 
-This, in turn, allows the client to access any blocked TCP service,
+This, in turn, allows the client to access any blocked TCP / UDP service,
 such as [a SOCKS proxy](https://github.com/serjs/socks5-server)
 or your favorite (but blocked) VPN service provider.
 

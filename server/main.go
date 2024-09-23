@@ -19,6 +19,7 @@ import (
 func main() {
 	var listenAddr string
 	var destinationAddr string
+	var destinationProtocol string
 	var acmeEmail string
 	var acmeHostnamesCommas string
 	var acmeCertCacheDir string
@@ -42,6 +43,14 @@ func main() {
 		"", // "localhost:1080", we probably should not have a default address for security reasons
 		"Forward client connections to this `address`.\nThis can also be a remote address.",
 	)
+	flag.StringVar(
+		&destinationProtocol,
+		"destination-protocol",
+		"tcp",
+		"what type of packets to send to the destination, "+
+			"i.e. what protocol the target application (WireGuard, SOCKS server) "+
+			" is using, \"udp\" or \"tcp\".\n",
+	)
 	flag.StringVar(&acmeEmail, "acme-email", "", "optional contact email for Let's Encrypt notifications")
 	flag.StringVar(&acmeHostnamesCommas, "acme-hostnames", "", "comma-separated hostnames for TLS certificate")
 	flag.StringVar(&acmeCertCacheDir, "acme-cert-cache", "acme-cert-cache", "directory in which certificates should be cached")
@@ -50,6 +59,10 @@ func main() {
 	flag.BoolVar(&unsafeLogging, "unsafe-logging", false, "prevent logs from being scrubbed")
 	// flag.BoolVar(&versionFlag, "version", false, "display version info to stderr and quit")
 	flag.Parse()
+
+	if destinationProtocol != "tcp" && destinationProtocol != "udp" {
+		log.Fatal("`destination-protocol` must either be \"tcp\" or \"udp\"")
+	}
 
 	if destinationAddr == "" {
 		flag.Usage()
@@ -101,7 +114,8 @@ func main() {
 	}
 
 	log.Printf(
-		"Listening for proxy connections on \"%v\" and forwarding them to \"%v\"",
+		"Listening for proxy connections on %v \"%v\" and forwarding them to \"%v\"",
+		destinationProtocol,
 		listenAddrStruct,
 		destinationAddr,
 	)
@@ -127,13 +141,25 @@ func main() {
 			// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/6d2011ded71dc53662fa0f256fbf9c3036c474a4/server/server.go#L99-111
 			break
 		}
-		log.Printf("Got Snowflake client connection! Forwarding to \"%v\"", destinationAddr)
-		go serveSnowflakeConnection(&clientConn, &destinationAddr)
+		log.Printf(
+			"Got Snowflake client connection! Forwarding to %v \"%v\"",
+			destinationProtocol,
+			destinationAddr,
+		)
+		go serveSnowflakeConnection(
+			&clientConn,
+			&destinationAddr,
+			&destinationProtocol,
+		)
 	}
 }
 
 // Closes the connection when it finishes serving it.
-func serveSnowflakeConnection(snowflakeConn *net.Conn, destinationAddr *string) {
+func serveSnowflakeConnection(
+	snowflakeConn *net.Conn,
+	destinationAddr *string,
+	destinationProtocol *string,
+) {
 	defer (*snowflakeConn).Close()
 
 	smuxConfig := smux.DefaultConfig()
@@ -161,7 +187,7 @@ func serveSnowflakeConnection(snowflakeConn *net.Conn, destinationAddr *string) 
 
 		go func() {
 			defer stream.Close()
-			destinationConn, err := net.Dial("tcp", *destinationAddr)
+			destinationConn, err := net.Dial(*destinationProtocol, *destinationAddr)
 			if err != nil {
 				log.Print("Failed to dial destination address", err)
 				// Hmm should we also snowflakeConn.Close()

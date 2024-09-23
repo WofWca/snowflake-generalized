@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/WofWca/snowflake-generalized/common"
+	pionUDP "github.com/pion/transport/v3/udp"
 	"github.com/xtaci/smux"
 	safelog "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil/safelog"
 	snowflakeClient "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2/client/lib"
@@ -33,11 +34,23 @@ func main() {
 		"localhost:2080",
 		"Listen for application connections on this `address` and forward them to the server",
 	)
+	destinationProtocol := flag.String(
+		"destination-protocol",
+		"tcp",
+		"what type of packets to forward, i.e. what protocol the target "+
+			"application (WireGuard, SOCKS server) is using, \"udp\" or \"tcp\".\n"+
+			"This value must be the same on the target server",
+	)
 	// noTCP := flag.Bool("no-tcp", false)
 	// noUDP := flag.Bool("no-udp", false)
 	// TODO also add socket file support or something like that.
 	// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40131
 	// ssh appears to have something like this.
+	//
+	// TODO perf: in UDP mode, make the client-server connection
+	// unreliable and unordered. When
+	// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40352
+	// is done.
 
 	iceServersCommas := flag.String(
 		"ice",
@@ -76,9 +89,38 @@ func main() {
 		log.Fatal("\"broker-url\" must be specified because the default broker only supports Tor relays.\nSee https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40166")
 	}
 
-	listener, err := net.Listen("tcp", *listenAddr)
-	if err != nil {
-		log.Fatalf("Failed to listen on \"%v\": %v", *listenAddr, err)
+	var listener net.Listener
+	switch *destinationProtocol {
+	case "tcp":
+		listenAddrStruct, err := net.ResolveTCPAddr("tcp", *listenAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		listener, err = net.ListenTCP("tcp", listenAddrStruct)
+		if err != nil {
+			log.Fatalf(
+				"Failed to listen on \"%v\" %v: %v",
+				*listenAddr,
+				destinationProtocol,
+				err,
+			)
+		}
+	case "udp":
+		listenAddrStruct, err := net.ResolveUDPAddr("udp", *listenAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		listener, err = pionUDP.Listen("udp", listenAddrStruct)
+		if err != nil {
+			log.Fatalf(
+				"Failed to listen on \"%v\" %v: %v",
+				*listenAddr,
+				destinationProtocol,
+				err,
+			)
+		}
+	default:
+		log.Fatal("`destination-protocol` parameter value must either be \"tcp\" or \"udp\"")
 	}
 
 	var frontDomains []string
@@ -155,8 +197,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Also UDP in the future
-	log.Printf("Forwarding TCP connections to \"%v\" to server \"%v\"", *listenAddr, *serverId)
+	log.Printf(
+		"Forwarding %v connections to \"%v\" to server \"%v\"",
+		*destinationProtocol,
+		*listenAddr,
+		*serverId,
+	)
 	acceptLoop(listener, snowflakeClientMuxSession)
 }
 
