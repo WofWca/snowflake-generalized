@@ -34,8 +34,10 @@ making your traffic bounce off of 1 + 3 relays
 (extra 1 is a Snowflake proxy) before it reaches the destination
 could be quite slow.  
 If you're only looking to browse Instagram or YouTube
-or whatever else is blocked for you, and you don't care about anonymity
-that Tor provides, you'd want Snowflake to connect directly
+or whatever else is blocked for you,
+and you
+[don't care](https://en.wikipedia.org/wiki/Cute_cat_theory_of_digital_activism)
+about anonymity that Tor provides, you'd want Snowflake to connect directly
 (or at least _more_ directly)
 to where you want to go, and not through a huge chain of relays.
 
