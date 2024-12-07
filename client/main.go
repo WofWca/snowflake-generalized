@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -23,12 +24,16 @@ func main() {
 	brokerURL := flag.String("broker-url", "", "URL of signaling broker")
 	serverId := flag.String(
 		"server-id",
-		"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-		"40 hex character server ID to which to forward the connections",
+		"",
+		"40 hex character server ID to which to forward the connections."+
+			"See also \"server-url\".",
 	)
-	// It's not yet possible to ask the broker to connect to a server by its URL
-	// directly. There is an MR for this.
-	// serverUrl := flag.String("server-url", "", "Server URL")
+	serverUrl := flag.String(
+		"server-url",
+		"",
+		"Server `URL` to which to forward the connections",
+	)
+
 	listenAddr := flag.String(
 		"listen-address",
 		"localhost:2080",
@@ -89,6 +94,14 @@ func main() {
 		log.Fatal("\"broker-url\" must be specified because the default broker only supports Tor relays.\nSee https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40166")
 	}
 
+	if *serverUrl == "" && *serverId == "" {
+		flag.Usage()
+		log.Fatal("Specify \"server-url\" or \"server-id\"")
+	} else if *serverUrl != "" && *serverId != "" {
+		flag.Usage()
+		log.Fatal("Don't specify both \"server-url\" and \"server-id\"")
+	}
+
 	var listener net.Listener
 	switch *destinationProtocol {
 	case "tcp":
@@ -140,7 +153,7 @@ func main() {
 	config := snowflakeClient.ClientConfig{
 		BrokerURL:         *brokerURL,
 		BridgeFingerprint: *serverId,
-		// RelayURL: relayURL,
+		RelayURL:          *serverUrl,
 
 		FrontDomains: frontDomains,
 		AmpCacheURL:  *ampCacheURL,
@@ -197,11 +210,17 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var idOrUrlString string
+	if *serverUrl != "" {
+		idOrUrlString = *serverUrl
+	} else {
+		idOrUrlString = fmt.Sprintf("with ID %v", serverId)
+	}
 	log.Printf(
-		"Forwarding %v connections to \"%v\" to server \"%v\"",
+		"Forwarding %v connections to \"%v\" to server %v",
 		*destinationProtocol,
 		*listenAddr,
-		*serverId,
+		idOrUrlString,
 	)
 	acceptLoop(listener, snowflakeClientMuxSession)
 }
