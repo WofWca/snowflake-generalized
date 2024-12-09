@@ -1,0 +1,59 @@
+services:
+  snowflake-server:
+    build:
+      context: ../../..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    command: [
+      "--listen-address", ":7901",
+      "--destination-address", "socks-server:1080",
+      "--destination-protocol", "tcp",
+      "--acme-cert-cache=/acme-cert-cache",
+
+      "--acme-hostnames=${ACME_HOSTNAMES}",
+      "--acme-email=${ACME_EMAIL}",
+
+      # Can be used for testing.
+      "--disable-tls=${DISABLE_TLS:-false}",
+      "--unsafe-logging=${UNSAFE_LOGGING:-false}"
+    ]
+    volumes:
+      - acme-cert-cache-volume:/acme-cert-cache:rw
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+      - target: 7901
+        published: 7901
+        protocol: tcp
+    networks:
+      - socks-server-network
+    logging:
+      options:
+        max-size: 100m
+        max-file: 5
+  socks-server:
+    image: serjs/go-socks5-proxy
+    restart: unless-stopped
+    networks:
+      - socks-server-network
+    environment:
+      - PROXY_PORT=1080
+      # TODO add this for extra safety.
+      # I guess we'll need to configure network IPs in the "networks" section.
+      # - ALLOWED_IPS=127.0.0.1
+    logging:
+      options:
+        # It's unlikely that you'll need log files of this image,
+        # and they also contain sensitive info
+        # (e.g. IP addresses of accessed websites),
+        # so let's keep them short.
+        max-size: 10k
+        max-file: 1
+        mode: non-blocking
+    # NOT publishing `ports:`: the SOCKS server should only be accessible
+    # to the snowflake-server container.
+networks:
+  socks-server-network:
+volumes:
+  acme-cert-cache-volume:

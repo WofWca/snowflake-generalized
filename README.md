@@ -95,6 +95,10 @@ Snowflake is a fascinating concept and I think it has a lot of potential.
 
 ## Usage
 
+Also see <./server/examples>
+
+***
+
 Let's make a setup that will work in the same way as
 
 ```bash
