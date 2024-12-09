@@ -40,6 +40,11 @@ The server setup is done! Now, to use the server:
 Your browser is now connected to the SOCKS server
 throught a Snowflake tunnel!
 
+You can adjust SOCKS server config
+(such as allowed destinations, username/password)
+by creating a `.socks-server.env` file.
+Supported variables are listed [here](https://github.com/serjs/socks5-server?tab=readme-ov-file#list-of-supported-config-parameters).
+
 To stop the server:
 
 ```bash

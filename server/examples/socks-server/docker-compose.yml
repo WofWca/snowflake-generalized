@@ -37,6 +37,12 @@ services:
     restart: unless-stopped
     networks:
       - socks-server-network
+    env_file:
+      - path: ./.socks-server.env
+        required: false
+    # When both env_file and environment are set for a service,
+    # values set by environment have precedence.
+    # https://docs.docker.com/reference/compose-file/services/#environment
     environment:
       - PROXY_PORT=1080
       # TODO add this for extra safety.
