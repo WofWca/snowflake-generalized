@@ -3,6 +3,15 @@
 This example sets up a SOCKS server that
 is accessible through a Snowflake tunnel.
 
+⚠️ Note that running a public SOCKS server
+could subject you to legal issues.  
+Setting a password on the SOCKS proxy
+in order to make it private won't really work,
+because proxies can intercept the password
+since it's transferred in plain text.  
+If you want to set up a personal VPN,
+there are better solutions, such as [Amnezia](https://amnezia.org/en/self-hosted).
+
 1. Clone this repo and `cd` into its root.
 2. [Install Docker](https://docs.docker.com/engine/install/).
 3. Obtain a domain name.
@@ -43,7 +52,11 @@ throught a Snowflake tunnel!
 You can adjust SOCKS server config
 (such as allowed destinations, username/password)
 by creating a `.socks-server.env` file.
-Supported variables are listed [here](https://github.com/serjs/socks5-server?tab=readme-ov-file#list-of-supported-config-parameters).
+Supported variables are listed [here](https://github.com/serjs/socks5-server?tab=readme-ov-file#list-of-supported-config-parameters).  
+⚠️ Note that the SOCKS username / password can be intercepted
+by Snowflake proxies:
+the client \<-\> server connection
+is not end-to-end encrypted.
 
 To stop the server:
 
