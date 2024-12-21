@@ -58,6 +58,15 @@ by Snowflake proxies:
 the client \<-\> server connection
 is not end-to-end encrypted.
 
+If you want the SOCKS server to only allow your own website as a destination,
+set `ALLOWED_DEST_FQDN=my-website.com` in `.socks-server.env`.  
+Then you can direct your users to utilize tools such as
+[SmartProxy](https://github.com/salarcode/SmartProxy)
+to use their Snowflake client as a SOCKS server only for your own website.  
+Or, if you maintain an app that only connects to your website,
+integrate the Snowflake client in your app and make the rest of the app
+use it as a SOCKS server.
+
 To stop the server:
 
 ```bash
