@@ -208,7 +208,7 @@ the connection will be performed to `example.com:80` from
 1. Download this project's code.
 
     ```bash
-    https://github.com/WofWca/snowflake-generalized.git
+    git clone https://github.com/WofWca/snowflake-generalized.git
     ```
 
 1. _
