@@ -1,7 +1,7 @@
 services:
   snowflake-server:
     build:
-      context: ../../..
+      context: ../..
       dockerfile: server/Dockerfile
     restart: unless-stopped
     command: [

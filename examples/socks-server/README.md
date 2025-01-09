@@ -23,8 +23,8 @@ there are better solutions, such as [Amnezia](https://amnezia.org/en/self-hosted
 
     ```bash
     docker compose \
-        --file server/examples/socks-server/docker-compose.yml \
-        --env-file=server/examples/socks-server/.env \
+        --file examples/socks-server/docker-compose.yml \
+        --env-file=examples/socks-server/.env \
         up --build --detach
     ```
 
@@ -70,5 +70,5 @@ use it as a SOCKS server.
 To stop the server:
 
 ```bash
-docker compose --file server/examples/socks-server/docker-compose.yml stop
+docker compose --file examples/socks-server/docker-compose.yml stop
 ```

@@ -95,7 +95,7 @@ Snowflake is a fascinating concept and I think it has a lot of potential.
 
 ## Usage
 
-Also see <./server/examples>
+Also see <./examples>
 
 ***
 
