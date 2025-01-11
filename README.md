@@ -62,6 +62,8 @@ Not yet.
 
 ### It's not actually faster
 
+<!-- FYI this section is linked to in ./examples/wireguard/README.md -->
+
 As much as I hate to admit it, this project is, well, _not actually faster_
 than regular Snowflake with Tor.
 Yep. As of 2025-01, after a bunch of tests, mainly with a SOCKS server
