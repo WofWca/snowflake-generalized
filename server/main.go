@@ -165,6 +165,9 @@ func serveSnowflakeConnection(
 	smuxConfig := smux.DefaultConfig()
 	// Let's not close the connection on our own, and let Snowflake handle that.
 	smuxConfig.KeepAliveDisabled = true
+	// See https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/48
+	// and the similar line in client/main.go
+	smuxConfig.MaxStreamBuffer = snowflakeServer.StreamSize
 
 	muxSession, err := smux.Server(*snowflakeConn, smuxConfig)
 	if err != nil {

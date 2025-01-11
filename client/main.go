@@ -204,6 +204,10 @@ func main() {
 	// TODO we probably don't want to terminate the client at all and
 	// just keep retrying.
 	smuxConfig.KeepAliveDisabled = true
+	// This seems to increase download speed by about x2,
+	// at least for the SOCKS example, based on eyeball tests.
+	// See https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/48
+	smuxConfig.MaxStreamBuffer = snowflakeClient.StreamSize
 
 	snowflakeClientMuxSession, err := smux.Client(snowflakeClientConn, smuxConfig)
 	if err != nil {
