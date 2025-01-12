@@ -20,6 +20,7 @@ func main() {
 	var listenAddr string
 	var destinationAddr string
 	var destinationProtocol string
+	var singleConnMode bool
 	var acmeEmail string
 	var acmeHostnamesCommas string
 	var acmeCertCacheDir string
@@ -50,6 +51,22 @@ func main() {
 		"what type of packets to send to the destination, "+
 			"i.e. what protocol the target application (WireGuard, SOCKS server) "+
 			" is using, \"udp\" or \"tcp\".\n",
+	)
+	// TODO feat: ideally we'd want to support both modes simultaneously,
+	// and let the client specify the mode when it connects,
+	// e.g. with a WebSocket URL query param.
+	flag.BoolVar(
+		&singleConnMode,
+		"single-connection-mode",
+		false,
+		"If each Snowflake client connection makes only a single TCP / UDP"+
+			" connection to destination-address"+
+			" (e.g. if the destination server is a WireGuard"+
+			" or an OpenVPN server), you can toggle this flag on."+
+			"\nIt turns off multiplexing, and thus it _might_"+
+			" improve connection performance."+
+			"\nThe value of this flag must be the same for both"+
+			" the server and the client.",
 	)
 	flag.StringVar(&acmeEmail, "acme-email", "", "optional contact email for Let's Encrypt notifications")
 	flag.StringVar(&acmeHostnamesCommas, "acme-hostnames", "", "comma-separated hostnames for TLS certificate")
@@ -146,11 +163,20 @@ func main() {
 			destinationProtocol,
 			destinationAddr,
 		)
-		go serveSnowflakeConnectionInMuxMode(
-			&clientConn,
-			&destinationAddr,
-			&destinationProtocol,
-		)
+
+		if singleConnMode {
+			go serveSnowflakeConnectionInSingleConnMode(
+				&clientConn,
+				&destinationAddr,
+				&destinationProtocol,
+			)
+		} else {
+			go serveSnowflakeConnectionInMuxMode(
+				&clientConn,
+				&destinationAddr,
+				&destinationProtocol,
+			)
+		}
 	}
 }
 
@@ -203,4 +229,23 @@ func serveSnowflakeConnectionInMuxMode(
 			common.CopyLoop(stream, destinationConn, shutdownChan)
 		}()
 	}
+}
+
+func serveSnowflakeConnectionInSingleConnMode(
+	snowflakeConn *net.Conn,
+	destinationAddr *string,
+	destinationProtocol *string,
+) {
+	defer (*snowflakeConn).Close()
+
+	destinationConn, err := net.Dial(*destinationProtocol, *destinationAddr)
+	if err != nil {
+		log.Print("Failed to dial destination address", err)
+		return
+	}
+	defer destinationConn.Close()
+
+	// TODO should we utilize `shutdownChan`?
+	shutdownChan := make(chan struct{})
+	common.CopyLoop(*snowflakeConn, destinationConn, shutdownChan)
 }
