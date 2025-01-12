@@ -128,6 +128,15 @@ Also see <./examples>
 
 ***
 
+This guide will walk you through setting up _an entire_ Snowflake network,
+with all 4 of its components.  
+However, as a regular user, or a service provider,
+you'll only need to set up one:
+users will need to set up the client,
+and service providers will need to set up the server.
+You're supposed to be using the broker and the proxies that other people
+already set up publicly.
+
 Let's make a setup that will work in the same way as
 
 ```bash
