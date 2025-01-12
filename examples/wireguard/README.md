@@ -134,10 +134,15 @@ Snowflake server setup:
         --broker-url=https://<BROKER_DOMAIN_NAME> \
         --server-url=wss://<YOUR_SERVER_DOMAIN_NAME>:7901 \
         --listen-address=127.0.0.1:51821 \
-        --destination-protocol=udp
+        --destination-protocol=udp \
+        --keep-local-addresses
     ```
 
-    Replace the parts with brackets accordingly.
+    Replace the parts with brackets accordingly.  
+    (`--keep-local-addresses` seems to be required,
+    otherwise the proxy connection gets interrupted
+    as soon as you enable the WireGuard tunnel,
+    but I am not quite sure why).
 
 1. Obtain a WireGuard client config file.
     In our example you can do it through the Amnezia UI,
