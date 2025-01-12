@@ -168,3 +168,8 @@ or utilize the "split-tunneling feature" (if the VPN client has one) and
 add the snowflake client executable file to the white-list
 (so that it bypasses the VPN).
 Amnezia VPN is one such client that has the split-tunneling feature.
+
+Also consider utilizing the `-single-connection-mode` flag
+on both the server and the client
+to see if it improves performance,
+though as of 2025-01 this doesn't appear to.
