@@ -302,6 +302,47 @@ Now feel free to replace `example.com:80` with a real service of your choosing.
 
 ### Example setup with Tor -->
 
+## Similar projects
+
+<!-- TODO should we address why we still work on this project,
+despite many competitors existing? Perhaps together with the
+"why did you make this project" section.
+(spoiler: because Snowflake is the core,
+and Tor Project provides long-term support for it). -->
+
+- [Snowflake](https://snowflake.torproject.org/).
+    Well, this project is based on Snowflake.
+- [Snowstorm](https://snowstorm.net/).
+    A WIP project by the original Snowflake author.
+    Seems very similar to this project in spirit.
+    Claims to be optimized for high speed and low latency.
+- [Lantern's Unbounded](https://unbounded.lantern.io/)
+([source code](https://github.com/getlantern/unbounded)).
+    Also very similar.
+    Development started after Snowflake has been released,
+    so it hopefully avoids unfortunate design decisions of Snowflake,
+    for example it's already using
+    [WebTransport](https://developer.mozilla.org/en-US/docs/Web/API/WebTransport),
+    as opposed to
+    [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+    used by Snowflake. WebTransport should be faster.
+- [Ceno Browser](https://censorship.no/).
+    Similar because peer-to-peer, but seems to be webpage-oriented,
+    i.e. it fetches cached versions from peers using BitTorrent.
+    But there is a lot more to it, so better check
+    [their manual](https://censorship.no/user-manual/en/concepts/how.html).
+- [MassBrowser](https://massbrowser.cs.umass.edu/).
+    The difference is that proxies act as exit nodes
+    and not just middle nodes like in Snowflake and in this project,
+    so it's not as safe to run a proxy.
+    And the project seems a bit abandoned as of 2025-01.
+- [SpotProxy](https://github.com/spotproxy-project/spotproxy/).
+    Doesn't seem super similar,
+    but there is a similarity in the fact that proxies are ephemeral,
+    and there is explicit support for switching between them.
+
+Please let me know if you know other similar projects!
+
 ## Addendum
 <!-- This is an implementation of the idea proposed in the
 ["Snowflake as a generic TCP (UDP?) forwarder (like `ssh -L`)"](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40168)
