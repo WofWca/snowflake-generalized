@@ -146,7 +146,7 @@ func main() {
 			destinationProtocol,
 			destinationAddr,
 		)
-		go serveSnowflakeConnection(
+		go serveSnowflakeConnectionInMuxMode(
 			&clientConn,
 			&destinationAddr,
 			&destinationProtocol,
@@ -155,7 +155,7 @@ func main() {
 }
 
 // Closes the connection when it finishes serving it.
-func serveSnowflakeConnection(
+func serveSnowflakeConnectionInMuxMode(
 	snowflakeConn *net.Conn,
 	destinationAddr *string,
 	destinationProtocol *string,

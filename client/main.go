@@ -226,10 +226,13 @@ func main() {
 		*listenAddr,
 		idOrUrlString,
 	)
-	acceptLoop(listener, snowflakeClientMuxSession)
+	muxModeAcceptLoop(listener, snowflakeClientMuxSession)
 }
 
-func acceptLoop(ln net.Listener, snowflakeClientMuxSession *smux.Session) {
+func muxModeAcceptLoop(
+	ln net.Listener,
+	snowflakeClientMuxSession *smux.Session,
+) {
 	for {
 		netConn, err := ln.Accept()
 		if err != nil {
