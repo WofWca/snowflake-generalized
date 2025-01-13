@@ -189,6 +189,7 @@ func serveSnowflakeConnectionInMuxMode(
 	defer (*snowflakeConn).Close()
 
 	smuxConfig := smux.DefaultConfig()
+	smuxConfig.Version = 2
 	// Let's not close the connection on our own, and let Snowflake handle that.
 	smuxConfig.KeepAliveDisabled = true
 	// See https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/48

@@ -69,6 +69,14 @@ func main() {
 			" the server and the client.",
 	)
 
+	serverIsOldVersion := flag.Bool(
+		"server-is-old-version",
+		false,
+		"Prior to 2025-01-13, we used smux version 1 instead of the latest 2."+
+			" If the server is of that older version, use this flag."+
+			"\nThis flag has no effect when using single-connection-mode",
+	)
+
 	iceServersCommas := flag.String(
 		"ice",
 		// Copy-pasted from
@@ -232,6 +240,13 @@ func main() {
 		// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/bf116939935b0a2ae2adf4f5976c349aae96e48b/client/lib/snowflake.go#L211-212
 
 		smuxConfig := smux.DefaultConfig()
+		if *serverIsOldVersion {
+			smuxConfig.Version = 1
+		} else {
+			// This seems to ~double TCP connection speed, as of 2025-01-13.
+			// Or so did it look based on a single test.
+			smuxConfig.Version = 2
+		}
 		// Connecting with Snowflake might take some minutes sometimes.
 		// Let's not close the connection on our own, and let Snowflake handle that.
 		//
