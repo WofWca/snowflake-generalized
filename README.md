@@ -54,8 +54,6 @@ In fact you can argue that this project is just Snowflake,
 but with adjusted arguments.  
 The source code is mostly boilerplate.
 
-<!-- ## Can I run a proxy to help others circumvent censorship? -->
-
 ## Is it production-ready?
 
 Not yet.
@@ -110,6 +108,36 @@ access to the proxy operator's private network,
 or distribution of illegal content.  
 And I am trying to do just that with
 [my recent MRs](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests?scope=all&state=all&author_username=WofWca).
+
+## Can I run a proxy?
+
+Yes, you can help this project help others circumvent censorship.  
+However, remember:
+
+- This project is still work-in-progress.
+    But we'll continue improving things,
+    so I guess you could just launch the proxy and forget about it:
+    it should update itself automatically, if you use the command below.
+- It might not be safe to run a proxy on a personal machine and+or network.  
+    Do _I_ think it's safe? Yes, it looks pretty safe to me.
+    But, AFAIK, nobody else has assessed the security of my changes.
+
+If you want to proceed:
+
+1. [Install Docker](https://docs.docker.com/engine/install/).
+2. Run
+
+    ```bash
+    curl -O https://gitlab.torproject.org/WofWca/snowflake/-/raw/for-snowflake-generalized/docker-compose-proxy.yml \
+        && docker compose -f docker-compose-proxy.yml up --detach
+    ```
+
+Again, the proxy code is based on the original Snowflake code,
+so you could also find
+[Tor Project's instructions](https://community.torproject.org/relay/setup/snowflake/standalone/docker/)
+and
+[Tor Project Forum](https://forum.torproject.org/tag/snowflake)
+useful.
 
 ## Why did you make the project?
 
