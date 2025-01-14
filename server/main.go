@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/WofWca/snowflake-generalized/common"
-	"github.com/xtaci/smux"
 	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/ptutil/safelog"
 	snowflakeServer "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2/server/lib"
 	"golang.org/x/crypto/acme/autocert"
@@ -165,14 +164,10 @@ func main() {
 		)
 
 		if singleConnMode {
-			go serveSnowflakeConnectionInSingleConnMode(
-				&clientConn,
-				&destinationAddr,
-				&destinationProtocol,
-			)
+			log.Fatal("WIP, singleConnMode doesn't make sense")
 		} else {
 			go serveSnowflakeConnectionInMuxMode(
-				&clientConn,
+				clientConn,
 				&destinationAddr,
 				&destinationProtocol,
 			)
@@ -182,25 +177,13 @@ func main() {
 
 // Closes the connection when it finishes serving it.
 func serveSnowflakeConnectionInMuxMode(
-	snowflakeConn *net.Conn,
+	snowflakeConn *snowflakeServer.SnowflakeClientConn,
 	destinationAddr *string,
 	destinationProtocol *string,
 ) {
 	defer (*snowflakeConn).Close()
 
-	smuxConfig := smux.DefaultConfig()
-	smuxConfig.Version = 2
-	// Let's not close the connection on our own, and let Snowflake handle that.
-	smuxConfig.KeepAliveDisabled = true
-	// See https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/48
-	// and the similar line in client/main.go
-	smuxConfig.MaxStreamBuffer = snowflakeServer.StreamSize
-
-	muxSession, err := smux.Server(*snowflakeConn, smuxConfig)
-	if err != nil {
-		log.Print("Mux session open error", err)
-		return
-	}
+	muxSession := snowflakeConn.Sess
 	defer muxSession.Close()
 
 	for {
@@ -232,21 +215,3 @@ func serveSnowflakeConnectionInMuxMode(
 	}
 }
 
-func serveSnowflakeConnectionInSingleConnMode(
-	snowflakeConn *net.Conn,
-	destinationAddr *string,
-	destinationProtocol *string,
-) {
-	defer (*snowflakeConn).Close()
-
-	destinationConn, err := net.Dial(*destinationProtocol, *destinationAddr)
-	if err != nil {
-		log.Print("Failed to dial destination address", err)
-		return
-	}
-	defer destinationConn.Close()
-
-	// TODO should we utilize `shutdownChan`?
-	shutdownChan := make(chan struct{})
-	common.CopyLoop(*snowflakeConn, destinationConn, shutdownChan)
-}

@@ -69,14 +69,6 @@ func main() {
 			" the server and the client.",
 	)
 
-	serverIsOldVersion := flag.Bool(
-		"server-is-old-version",
-		false,
-		"Prior to 2025-01-13, we used smux version 1 instead of the latest 2."+
-			" If the server is of that older version, use this flag."+
-			"\nThis flag has no effect when using single-connection-mode",
-	)
-
 	iceServersCommas := flag.String(
 		"ice",
 		// Copy-pasted from
@@ -206,12 +198,7 @@ func main() {
 	)
 
 	if *singleConnMode {
-		for {
-			err := serveOneConnInSingleConnMode(listener, snowflakeClientTransport)
-			if err != nil {
-				return
-			}
-		}
+		log.Fatal("singleConnMode not supported in this WIP version")
 	} else {
 		snowflakeClientConn, err := snowflakeClientTransport.Dial()
 		if err != nil {
@@ -239,29 +226,7 @@ func main() {
 		// so we can use it?
 		// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/bf116939935b0a2ae2adf4f5976c349aae96e48b/client/lib/snowflake.go#L211-212
 
-		smuxConfig := smux.DefaultConfig()
-		if *serverIsOldVersion {
-			smuxConfig.Version = 1
-		} else {
-			// This seems to ~double TCP connection speed, as of 2025-01-13.
-			// Or so did it look based on a single test.
-			smuxConfig.Version = 2
-		}
-		// Connecting with Snowflake might take some minutes sometimes.
-		// Let's not close the connection on our own, and let Snowflake handle that.
-		//
-		// TODO we probably don't want to terminate the client at all and
-		// just keep retrying.
-		smuxConfig.KeepAliveDisabled = true
-		// This seems to increase download speed by about x2,
-		// at least for the SOCKS example, based on eyeball tests.
-		// See https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/48
-		smuxConfig.MaxStreamBuffer = snowflakeClient.StreamSize
-
-		snowflakeClientMuxSession, err := smux.Client(snowflakeClientConn, smuxConfig)
-		if err != nil {
-			log.Fatal(err)
-		}
+		snowflakeClientMuxSession := snowflakeClientConn.Sess
 
 		muxModeAcceptLoop(listener, snowflakeClientMuxSession)
 	}
@@ -302,51 +267,4 @@ func muxModeAcceptLoop(
 			common.CopyLoop(snowflakeStream, netConn, shutdownChan)
 		}()
 	}
-}
-
-// If an error is returned, this function should not be called another time.
-func serveOneConnInSingleConnMode(
-	ln net.Listener,
-	snowflakeClientTransport *snowflakeClient.Transport,
-) error {
-	snowflakeClientConn, err := snowflakeClientTransport.Dial()
-	if err != nil {
-		// TODO should we retry? With a timeout?
-		log.Print("Snowflake dial failed", err)
-		return err
-	}
-	defer snowflakeClientConn.Close()
-	// TODO it looks like the connection doesn't actually get fully closed.
-	// You can reproduce by doing a bunch of
-	// `curl localhost:2080` + Ctrl + C.
-	// The client will be printing `Traffic Bytes (in|out)`
-	// a lot more frequently.
-	// Maybe we really need to create a new `snowflakeClientTransport`
-	// for each `ln.Accept()`.
-
-	netConn, err := ln.Accept()
-	if err != nil {
-		log.Print("Failed to accept connection", err)
-		if err, ok := err.(net.Error); ok && err.Temporary() {
-			return nil
-		}
-		// TODO is this what we want? This will terminate the client.
-		return err
-	}
-	defer netConn.Close()
-	log.Print("Got new connection! Forwarding")
-
-	// Perhaps instead of blocking here we could make a new
-	// Snowflake client connection per each network connection,
-	// instead of never doing `ln.Accept()`.
-	// Though remember that apparently `snowflakeClientTransport.Dial()`
-	// closes all the previous `snowflakeClientConn` for the instance of
-	// `snowflakeClientTransport`,
-	// so a new `snowflakeClientTransport` needs to be created every time.
-
-	// TODO should we utilize `shutdownChan`?
-	shutdownChan := make(chan struct{})
-	common.CopyLoop(snowflakeClientConn, netConn, shutdownChan)
-
-	return nil
 }
