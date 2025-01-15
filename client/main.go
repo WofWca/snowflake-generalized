@@ -80,8 +80,8 @@ func main() {
 	iceServersCommas := flag.String(
 		"ice",
 		// Copy-pasted from
-		// https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/98db63ad01d9d78b8cd8aad77219a3d900bfdfef/client/README.md#L38
-		"stun:stun.l.google.com:19302,stun:stun.antisip.com:3478,stun:stun.bluesip.net:3478,stun:stun.dus.net:3478,stun:stun.epygi.com:3478,stun:stun.sonetel.com:3478,stun:stun.uls.co.za:3478,stun:stun.voipgate.com:3478,stun:stun.voys.nl:3478",
+		// curl https://gitlab.torproject.org/tpo/applications/tor-browser-build/-/raw/main/projects/tor-expert-bundle/pt_config.json | grep "ice=.* "
+		"stun:stun.antisip.com:3478,stun:stun.epygi.com:3478,stun:stun.uls.co.za:3478,stun:stun.voipgate.com:3478,stun:stun.mixvoip.com:3478,stun:stun.nextcloud.com:3478,stun:stun.bethesda.net:3478,stun:stun.nextcloud.com:443",
 		"comma-separated list of ICE servers",
 	)
 
