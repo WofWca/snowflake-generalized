@@ -183,6 +183,10 @@ the connection will be performed to `example.com:80` from
 
 - [Install Go](https://go.dev/doc/install).
 
+WIP: to launch server and client in "better performance" mode,
+use env variable `SNOWFLAKE_TEST_KCP_FAST3MODE=1`.
+You will also need a proxy that supports this mode.
+
 ### 1. Set up the broker
 
 > It is not possible to use the already set up Snowflake broker

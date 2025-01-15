@@ -30,7 +30,6 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/klauspost/reedsolomon v1.12.4 // indirect
@@ -71,4 +70,4 @@ require (
 
 // replace gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2 => gitlab.torproject.org/WofWca/snowflake/v2 for-snowflake-generalized
 // and then `go mod tidy`.
-replace gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2 => gitlab.torproject.org/WofWca/snowflake/v2 v2.3.2-0.20250113200932-e867198a38c6
+replace gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2 => gitlab.torproject.org/WofWca/snowflake/v2 v2.3.2-0.20250115193500-e5df23450605
