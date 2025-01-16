@@ -62,6 +62,9 @@ Not yet.
 
 <!-- FYI this section is linked to in ./examples/wireguard/README.md -->
 
+Update 2025-01-16: It will get much faster soon!  
+See [the "unreliable mode" MR comments](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/315#note_3149069).
+
 As much as I hate to admit it, this project is, well, _not actually faster_
 than regular Snowflake with Tor.
 Yep. As of 2025-01, after a bunch of tests, mainly with a SOCKS server
