@@ -58,33 +58,19 @@ The source code is mostly boilerplate.
 
 Not yet.
 
-### It's not actually faster
+### Not as fast as it can be (but still faster!)
 
 <!-- FYI this section is linked to in ./examples/wireguard/README.md -->
 
-Update 2025-01-16: It will get much faster soon!  
-See [the "unreliable mode" MR comments](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/315#note_3149069).
-
-As much as I hate to admit it, this project is, well, _not actually faster_
-than regular Snowflake with Tor.
-Yep. As of 2025-01, after a bunch of tests, mainly with a SOCKS server
-(see [./examples/socks-server](./examples/socks-server)),
-I have not been able to achieve
-a sustained download speeds greater than 8 Mbit / s.  
-Latency, however _is_ actually lower due fewer hops,
-but it's still not suitable for, say, gaming.
-
-So, even with Tor, Snowflake itself seems to be the bottleneck.
-
-But all is not lost!
-The Tor Project team is working on performance improvements.
-One such improvement is
-["Use unreliable and unordered WebRTC data channels"](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40352),
-which gives highest hopes.  
+Upstream Snowflake is still pending quite a lot of work
+to improve its performance (download speed and latency).  
+But at the current state of the project, _20+ Mbit / s_
+with download latency below 700 ms is already achievable!
 
 For reference, here are some other performance-related issues,
 which also include performance measurements:
 
+- [Use unreliable and unordered WebRTC data channels](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40352)
 - [Tune reliable protocol parameters for Snowflake](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40026)
 - [Multiplex - one client splits traffic across multiple proxies](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/25723)
 

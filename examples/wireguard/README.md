@@ -43,7 +43,7 @@ This setup is not production-ready, due to the following issues:
 
     Apart from general slow-ness of snowflake (see e.g.
     [this issue](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/issues/40026)
-    and the "It's not actually faster" section at the root README),
+    and the "Not as fast as it can be" section at the root README),
     I suspect that the current implementation of the UDP mode in this project
     is not able to preserve UDP packets in their "datagram" form
     and simply turns them into a stream of data,
