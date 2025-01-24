@@ -35,5 +35,4 @@ func CopyLoop(c1 io.ReadWriteCloser, c2 io.ReadWriteCloser, shutdown chan struct
 	case <-done:
 	case <-shutdown:
 	}
-	log.Println("copy loop ended")
 }

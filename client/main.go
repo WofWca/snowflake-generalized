@@ -281,7 +281,10 @@ func muxModeAcceptLoop(
 			// TODO is this what we want? This will terminate the client.
 			break
 		}
-		log.Print("Got new connection! Forwarding")
+		log.Printf(
+			"Got new connection from %v! Forwarding",
+			netConn.RemoteAddr().String(),
+		)
 
 		go func() {
 			defer netConn.Close()
@@ -300,6 +303,11 @@ func muxModeAcceptLoop(
 			// TODO should we utilize `shutdownChan`?
 			shutdownChan := make(chan struct{})
 			common.CopyLoop(snowflakeStream, netConn, shutdownChan)
+			log.Printf(
+				"Connection ended %v (stream %v)",
+				netConn.RemoteAddr().String(),
+				snowflakeStream.ID(),
+			)
 		}()
 	}
 }
@@ -334,7 +342,10 @@ func serveOneConnInSingleConnMode(
 		return err
 	}
 	defer netConn.Close()
-	log.Print("Got new connection! Forwarding")
+	log.Printf(
+		"Got new connection from %v! Forwarding",
+		netConn.RemoteAddr().String(),
+	)
 
 	// Perhaps instead of blocking here we could make a new
 	// Snowflake client connection per each network connection,
@@ -347,6 +358,10 @@ func serveOneConnInSingleConnMode(
 	// TODO should we utilize `shutdownChan`?
 	shutdownChan := make(chan struct{})
 	common.CopyLoop(snowflakeClientConn, netConn, shutdownChan)
+	log.Printf(
+		"Connection ended %v",
+		netConn.RemoteAddr().String(),
+	)
 
 	return nil
 }

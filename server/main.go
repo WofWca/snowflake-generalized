@@ -225,9 +225,20 @@ func serveSnowflakeConnectionInMuxMode(
 			}
 			defer destinationConn.Close()
 
+			log.Printf(
+				"Opened new connection to %v for stream %v!",
+				destinationConn.RemoteAddr().String(),
+				stream.ID(),
+			)
+
 			// TODO should we utilize `shutdownChan`?
 			shutdownChan := make(chan struct{})
 			common.CopyLoop(stream, destinationConn, shutdownChan)
+			log.Printf(
+				"Connection ended %v (stream %v)",
+				destinationConn.RemoteAddr().String(),
+				stream.ID(),
+			)
 		}()
 	}
 }
@@ -249,4 +260,8 @@ func serveSnowflakeConnectionInSingleConnMode(
 	// TODO should we utilize `shutdownChan`?
 	shutdownChan := make(chan struct{})
 	common.CopyLoop(*snowflakeConn, destinationConn, shutdownChan)
+	log.Printf(
+		"Connection ended %v",
+		destinationConn.RemoteAddr().String(),
+	)
 }
