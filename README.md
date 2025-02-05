@@ -15,6 +15,42 @@ This, in turn, allows the client to access any blocked TCP / UDP service,
 such as [a SOCKS proxy](https://github.com/serjs/socks5-server)
 or your favorite (but blocked) VPN service provider.
 
+## Try it
+
+<!-- FYI this section is linked from ./examples/socks-server/README.md -->
+
+1. [Install Go](https://go.dev/doc/install).
+2. Clone the code:
+
+    ```bash
+    git clone https://github.com/WofWca/snowflake-generalized.git \
+        && cd snowflake-generalized
+    ```
+
+3. Launch the client:
+
+    ```bash
+    go run ./client \
+        -broker-url=https://sf-dh-broker.duckdns.org/ \
+        -server-url=wss://envoy1-snowflake.ce.unredacted.org:7901 \
+        -listen-address=localhost:2080 \
+        -destination-protocol=tcp
+    ```
+
+4. Open another terminal and access a website through the Snowflake tunnel:
+
+    ```bash
+    curl --proxy "socks5://localhost:2080" https://api.ipify.org
+    ```
+
+Now you can set your browser to use the SOCKS5 proxy at `localhost:2080`.
+
+For more info about how this example works,
+see [./examples/wireguard/](./examples/wireguard/).
+
+Many thanks to [Unredacted.org](https://unredacted.org/)
+for setting up a public SOCKS server!
+
 ## Background knowledge
 
 [Snowflake](https://snowflake.torproject.org/) is developed by The Tor Project.

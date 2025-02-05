@@ -1,5 +1,8 @@
 # SOCKS server example
 
+FYI there is a publicly accessible service that implements this setup.
+See the ["Try it" section in root README](../../README.md#try-it).
+
 This example sets up a SOCKS server that
 is accessible through a Snowflake tunnel.
 
