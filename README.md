@@ -339,7 +339,8 @@ and service providers will need to set up the server.
 You're supposed to be using the broker and the proxies that other people
 already set up publicly.
 
-Let's make a setup that will work in the same way as
+With that out of the way,
+let's make a setup that will work in the same way as
 
 ```bash
 ssh -L localhost:2080:example.com:80 my-server-1.my-domain.com -N
