@@ -24,6 +24,7 @@ In summary, the changes are:
 - Allow clients to ask proxies to connect to any host they choose.
 - Add a lot of hardening features
     (which are needed because of the previous bullet point).
+    See ["Security"](#security).
 - Add WASM support for the proxy
     (see [the relevant MR](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/513)).
 
@@ -146,6 +147,138 @@ or distribution of illegal content.
 And I am trying to do just that with
 [my recent MRs](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests?scope=all&state=all&author_username=WofWca).
 <!-- FYI we also talk about the fork above -->
+
+## Security
+
+<!-- FYI this section has links to it in this README. -->
+So, the proxy
+[can connect to arbitrary addresses, specified by clients](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/379).
+This begs the question:
+Is it even safe to run a proxy on a VPS, let alone from home?
+
+To address this, we have several security layers:
+
+<!-- TODO explain what each of these protects against?
+Or is what we have sufficient already? -->
+- The proxy will only accept to connect to _one single_, somewhat obscure, port.
+
+    We chose port `7901`.
+
+    It is not very likely (but still possible)
+    that any services are running on this port,
+    except a Snowflake server.
+    So if there is no application listening on this port,
+    the target host should simply reject such a connection,
+    and nothing should happen.
+
+    If the client specifies a different port,
+    the proxy will reject such a request,
+    and no network activity will occur at all,
+    not even DNS
+    (apart, of course, from sending an error response to the broker).
+
+    See [the relevant MR, "hardening(proxy): check port against relay pattern"](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/381).
+
+    (Just FYI this port is already assigned by IANA
+    to another application, "TNOS Service Protocol".
+    See the [IANA Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=7901)).
+- The proxy will not connect to _private_ IP addresses.
+
+    The proxy will perform a DNS request,
+    and verify that the target host does not resolve
+    to any private addresses.
+
+    If the host is at a private address,
+    the proxy will reject the client's request,
+    and will not send any packets to the target host.
+
+    In addition, if the client tried to specify the target host by IP,
+    the proxy won't even have to perform the DNS request:
+    determining whether an IP is private requires no network activity.
+    Note that, contrary to what one might think,
+    private machines _may_ and often do have a host name associated with them,
+    for example `myrouter.local`
+    (this is [used e.g. by Linksys](https://support.linksys.com/kb/article/378-en/)).
+
+    The DNS check, however, is not always available
+    in the browser extension version of the proxy.
+    It requires the DNS permission.
+    See [`dns.resolve()`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/dns/resolve).
+
+    See [the relevant commit, "hardening(proxy): `!allowPrivateIPs`: perform DNS"](https://gitlab.torproject.org/WofWca/snowflake/-/commit/2438ec9e7ca00a4290600ed40527bd0229428cd3).
+- The _broker_ will reject the client's request if the target host
+    doesn't resolve to a public IP address.
+
+    The broker will perform its own DNS request.
+
+    This alone, of course, does not save the proxy if the broker goes evil,
+    but it's still a layer of security.
+
+    However, as was mentioned, a domain name might resolve to a public address
+    on the broker side, but to a public address on the proxy side.
+    For example, ASUS routers can be accessed from the home network
+    by domain name `www.asusrouter.com`
+    (see [their help article on this](https://www.asus.com/support/faq/1005263/)).
+    Even though the domain name doesn't resolve to a public address
+    as of 2025-02, they might change their mind about it.
+
+    See [the relevant commit, "hardening(broker): DNS check if relayURL is public"](https://gitlab.torproject.org/WofWca/snowflake/-/commit/7d53658f83638a476a117b42fa733b83d53413f5).
+- The proxy will only accept to connect to _TLS_ (HTTPS) servers
+    (and not unencrypted bare HTTP servers).
+
+    Most of the time (but not always!),
+    HTTP servers that run on private addresses
+    do not utilize TLS.
+    If the target server doesn't speak TLS, the connection to it will fail.
+    The target server will still receive packets from the proxy,
+    but it's basically gonna looks like garbage to it.
+
+    To the best of my knowledge, at this stage
+    (during TLS connection establishment)
+    the client still cannot in any way control
+    the contents of the packets that the proxy sends to the target host.
+
+    Note that some routers, such as Linksys
+    (see [this help article](https://support.linksys.com/kb/article/378-en/))
+    _do_ utilize TLS (`https://192.168.1.1`).
+- The proxy will check if the target HTTP server _is a Snowflake server_.
+
+    The proxy will send a benign HTTP GET request to the target server,
+    with a special header (`Are-You-A-Snowflake-Server`).
+    The server must respond with another header (`I-Am-A-Snowflake-Server`),
+    otherwise the proxy will refuse to proceed.
+    The contents of such a request, apart from the host address,
+    are not controlled by the client.
+
+    See [the relevant MR, "hardening: make proxies request server consent"](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/385).
+- The proxy will only do _WebSocket_ connections (later WebTransport).
+
+    If the target server is not a WebSocket server,
+    the connection will fail.
+
+    This is inherent in the WebSocket protocol.
+    See [The WebSocket Protocol RFC: Opening Handshake](https://www.rfc-editor.org/rfc/rfc6455.html#section-1.3).
+- As an extra layer to ensure some of the above claims,
+    the browser extension version of the proxy utilizes
+    [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
+    Namely, the CSP includes the following:
+
+    ```txt
+    connect-src
+        wss://*:7901
+        https://*:7901/are_you_a_snowflake_server
+        https://<BROKER_DOMAIN_NAME>
+        https://snowflake-broker.torproject.net:8443/probe
+    ```
+
+TODO (unimplemented) extra measures:
+
+- Utilize WebSocket subprotocol negotiation.
+- Respect the `Access-Control-Allow-Origin` response header.
+- Make the broker perform the consent request.
+- Make the broker only accept servers which registered on this broker.
+
+Please let me know if you have ideas / concerns!
 
 ## Can I run a proxy?
 
