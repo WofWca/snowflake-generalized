@@ -30,7 +30,8 @@ In summary, the changes are:
 
 ## Try it
 
-<!-- FYI this section is linked from ./examples/socks-server/README.md -->
+<!-- FYI this section is linked from ./examples/socks-server/README.md,
+and in this README -->
 
 1. [Install Go](https://go.dev/doc/install).
 2. Clone the code:
@@ -322,6 +323,8 @@ ready to accept clients for whom their service is blocked.
 Snowflake is a fascinating concept and I think it has a lot of potential.
 
 ## Usage
+
+For a quick demo, see [the "Try it" section](#try-it).
 
 Also see [./examples](./examples)
 
