@@ -15,6 +15,18 @@ This, in turn, allows the client to access any blocked TCP / UDP service,
 such as [a SOCKS proxy](https://github.com/serjs/socks5-server)
 or your favorite (but blocked) VPN service provider.
 
+<!-- FYI we also talk about the fork's changes below. -->
+This project is based on a _fork_ of Snowflake.
+The difference between the fork and the original can be found
+[here](https://gitlab.torproject.org/WofWca/snowflake/-/compare/main...for-snowflake-generalized?from_project_id=43).
+In summary, the changes are:
+
+- Allow clients to ask proxies to connect to any host they choose.
+- Add a lot of hardening features
+    (which are needed because of the previous bullet point).
+- Add WASM support for the proxy
+    (see [the relevant MR](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/513)).
+
 ## Try it
 
 <!-- FYI this section is linked from ./examples/socks-server/README.md -->
@@ -133,6 +145,7 @@ access to the proxy operator's private network,
 or distribution of illegal content.  
 And I am trying to do just that with
 [my recent MRs](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests?scope=all&state=all&author_username=WofWca).
+<!-- FYI we also talk about the fork above -->
 
 ## Can I run a proxy?
 
