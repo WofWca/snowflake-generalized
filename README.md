@@ -185,28 +185,48 @@ Or is what we have sufficient already? -->
     See the [IANA Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=7901)).
 - The proxy will not connect to _private_ IP addresses.
 
-    The proxy will perform a DNS request,
-    and verify that the target host does not resolve
-    to any private addresses.
+  - Standalone (native) proxy:
 
-    If the host is at a private address,
-    the proxy will reject the client's request,
-    and will not send any packets to the target host.
+      The standalone (native) proxy will perform a DNS request,
+      and verify that the target host does not resolve
+      to any private addresses.
+      If the host is at a private address,
+      the proxy will reject the client's request,
+      and will not send any packets to the target host.
 
-    In addition, if the client tried to specify the target host by IP,
-    the proxy won't even have to perform the DNS request:
-    determining whether an IP is private requires no network activity.
-    Note that, contrary to what one might think,
-    private machines _may_ and often do have a host name associated with them,
-    for example `myrouter.local`
-    (this is [used e.g. by Linksys](https://support.linksys.com/kb/article/378-en/)).
+      See [the relevant commit, "hardening(proxy): `!allowPrivateIPs`: perform DNS"](https://gitlab.torproject.org/WofWca/snowflake/-/commit/2438ec9e7ca00a4290600ed40527bd0229428cd3).
+  - Browser-based proxy:
 
-    The DNS check, however, is not always available
-    in the browser extension version of the proxy.
-    It requires the DNS permission.
-    See [`dns.resolve()`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/dns/resolve).
+      The DNS check, however, is not always available
+      in the browser extension version of the proxy.
+      It requires the DNS permission, which Chromium does not support,
+      as of 2025-03.
+      See [`dns.resolve()`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/dns/resolve).
 
-    See [the relevant commit, "hardening(proxy): `!allowPrivateIPs`: perform DNS"](https://gitlab.torproject.org/WofWca/snowflake/-/commit/2438ec9e7ca00a4290600ed40527bd0229428cd3).
+      In browsers we will rely on the concept called
+      ["Private Network Access" (PNA)](https://developer.chrome.com/blog/private-network-access-preflight/).
+      When the browser determines that the target server is located
+      on a private address (such as `127.0.0.1` or `192.168.1.1`),
+      it will perform a preflight request to the server,
+      and expect it to explicitly specify in the response headers
+      that it allows public origins to access it
+      (`Access-Control-Allow-Private-Network: true`).
+      If this is not the case, the proxy will refuse to proceed.
+      "Private Network Access" is not yet fully adopted by browsers,
+      but we are prepared for it: we set the `treat-as-public-address`
+      CSP directive.
+
+      Note that, at the current state, PNA is more invasive,
+      because it does perform an HTTP request to the target server,
+      unlike a simple DNS request.
+
+  In addition, if the client tried to specify the target host by IP,
+  the proxy won't even have to perform the DNS request:
+  determining whether an IP is private requires no network activity.
+  Note that, contrary to what one might think,
+  private machines _may_ and often do have a host name associated with them,
+  for example `myrouter.local`
+  (this is [used e.g. by Linksys](https://support.linksys.com/kb/article/378-en/)).
 - The _broker_ will reject the client's request if the target host
     doesn't resolve to a public IP address.
 
@@ -244,12 +264,14 @@ Or is what we have sufficient already? -->
     _do_ utilize TLS (`https://192.168.1.1`).
 - The proxy will check if the target HTTP server _is a Snowflake server_.
 
-    The proxy will send a benign HTTP GET request to the target server,
+    The proxy will send a benign HTTP OPTIONS request to the target server,
     with a special header (`Are-You-A-Snowflake-Server`).
     The server must respond with another header (`I-Am-A-Snowflake-Server`),
     otherwise the proxy will refuse to proceed.
     The contents of such a request, apart from the host address,
     are not controlled by the client.
+    This is similar to the existing concept called
+    ["preflight requests"](https://developer.mozilla.org/en-US/docs/Glossary/Preflight_request).
 
     See [the relevant MR, "hardening: make proxies request server consent"](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/merge_requests/385).
 - The proxy will only do _WebSocket_ connections (later WebTransport).
@@ -259,6 +281,15 @@ Or is what we have sufficient already? -->
 
     This is inherent in the WebSocket protocol.
     See [The WebSocket Protocol RFC: Opening Handshake](https://www.rfc-editor.org/rfc/rfc6455.html#section-1.3).
+- The proxy will check if the WebSocket server claims to support
+    the Snowflake-specific subprotocol.
+
+    In some cases the WebSocket connection will fail at hanshake level
+    (e.g. in Chromium).
+    If that didn't happen, we'll explicitly verify
+    that the WebSocket server picked the right protocol name string.
+
+    See [the relevant commit, "hardening: RequireWebSocketSubprotocolNegotiation"](https://gitlab.torproject.org/WofWca/snowflake/-/commit/0e164a6119aac01b2543a9c78f3bc0192110a599).
 - As an extra layer to ensure some of the above claims,
     the browser extension version of the proxy utilizes
     [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
@@ -271,6 +302,14 @@ Or is what we have sufficient already? -->
         https://<BROKER_DOMAIN_NAME>
         https://snowflake-broker.torproject.net:8443/probe
     ```
+
+- Side-channel attack protection.
+
+    For the majority of the abovementioned checks, if a check fails,
+    the proxy will not reveal any information to the client
+    about the kind of error that occured.
+    This includes timing attack protection: the proxy will respond
+    to the client after a fixed amount of time, should an error occur.
 
 TODO (unimplemented) extra measures:
 
