@@ -17,6 +17,7 @@ or your favorite (but blocked) VPN service provider.
 
 <!-- FYI we also talk about the fork's changes below. -->
 This project is based on a _fork_ of Snowflake.
+The majority of the changes relevant to this project are in that fork.
 The difference between the fork and the original can be found
 [here](https://gitlab.torproject.org/WofWca/snowflake/-/compare/main...for-snowflake-generalized?from_project_id=43).
 In summary, the changes are:
