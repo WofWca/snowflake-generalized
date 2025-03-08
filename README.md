@@ -313,10 +313,24 @@ Or is what we have sufficient already? -->
 
 TODO (unimplemented) extra measures:
 
-- Utilize WebSocket subprotocol negotiation.
-- Respect the `Access-Control-Allow-Origin` response header.
+- Improve / ensure resiliance against
+[DNS rebinding attacks (CAPEC-275: DNS Rebinding)](https://capec.mitre.org/data/definitions/275.html)
+    In the context of our project,
+    this applies to the "consent" OPTIONS request,
+    which is performed prior to the actual WebSocket connection,
+    i.e. the consent request and the WebSocket connection
+    might actually go to different addresses.
+    This is a form of a
+    ["time-of-check to time-of-use" (TOCTOU) vulnerability (CWE-367)](https://cwe.mitre.org/data/definitions/367.html).
+
+    As of 2025-03, this is attack is mitigated by
+    the use of TLS, WebSocket subprotocol negotiation,
+    and destination port limiting (`:7901`) (see above).
 - Make the broker perform the consent request.
 - Make the broker only accept servers which registered on this broker.
+
+In general, the class of vulnerabilities that the proxy is most open to is
+[CWE-918: Server-Side Request Forgery (SSRF)](https://cwe.mitre.org/data/definitions/918.html).
 
 Please let me know if you have ideas / concerns!
 
